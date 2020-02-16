@@ -1,0 +1,14 @@
+{"text": "Be Great!", "finished": false, "child":
+  [
+    {"text": "OSS master", "finished": false, "child":
+      [
+        {"text": "Learn Linux Commands", "finished": false, "child":
+          [
+            {"text": "get LPIC", "finished": false},
+            {"text": "build my own Rpi server", "finished": true}
+          ]
+        }
+      ]
+    }
+  ]
+}
