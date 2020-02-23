@@ -14,7 +14,7 @@ try {
   process.exit(1);
 }
 
-app.get('/', (req, res) => {
+app.get('/lifeGoal.json', (req, res) => {
   res.json(lifeGoal);
 });
 
