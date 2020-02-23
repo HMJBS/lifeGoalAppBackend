@@ -1,11 +1,11 @@
-{"text": "Be Great!", "finished": false, "child":
+{"name": "Be Great!", "image_url":"lifegoal.png", "finished": false, "children":
   [
-    {"text": "OSS master", "finished": false, "child":
+    {"name": "OSS master", "image_url":"skill.png", "finished": false, "children":
       [
-        {"text": "Learn Linux Commands", "finished": false, "child":
+        {"name": "Learn Linux Commands", "image_url":"knowledge.png", "finished": false, "children":
           [
-            {"text": "get LPIC", "finished": false},
-            {"text": "build my own Rpi server", "finished": true}
+            {"name": "get LPIC", "image_url":"study.png", "finished": false},
+            {"name": "build my own Rpi server", "image_url":"study.png",  "finished": true}
           ]
         }
       ]
