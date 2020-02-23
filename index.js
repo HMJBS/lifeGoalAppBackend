@@ -3,7 +3,7 @@ const app = express();
 const fs = require('fs');
 const process = require('process');
 
-const PORT = 8080;
+const PORT = 7005;
 const IP = 'localhost';
 
 let lifeGoal;
