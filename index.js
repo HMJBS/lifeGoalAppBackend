@@ -6,16 +6,16 @@ const process = require('process');
 const PORT = 7005;
 const IP = 'localhost';
 
-let lifeGoal;
+let lifeObjects;
 try {
-  lifeGoal = require(`${__dirname}/json/lifeGoal.json`);
+  lifeObjects = require(`${__dirname}/json/lifeObjects.json`);
 } catch(ex) {
-  console.error('[core]failed to load lifeGoal.json.');
+  console.error('[core]failed to load lifeObjects.json.');
   process.exit(1);
 }
 
-app.get('/lifeGoal.json', (req, res) => {
-  res.json(lifeGoal);
+app.get('/:userName', (req, res) => {
+  res.json(lifeObjects);
 });
 
 app.listen(PORT, IP, () => {
