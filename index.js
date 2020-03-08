@@ -1,10 +1,11 @@
 const express = require('express');
 const app = express();
-const fs = require('fs');
 const process = require('process');
 
-const PORT = 7005;
-const IP = 'localhost';
+const PORT = process.env.PORT || 7005;
+const IP = process.env.HOST ||' localhost';
+
+const dotenv = require('dotenv').config();
 
 let lifeObjects;
 try {
