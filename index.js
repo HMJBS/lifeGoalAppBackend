@@ -16,7 +16,9 @@ app.use(express.json());
 
 // server GET User instance
 app.get('/user/:userName', (req, res) => {
-  User.findOne( { userName: req.params.userName }, (err, user) => {
+  User.findOne( { userName: req.params.userName }).
+    select('-userName').
+    exec( (err, user) => {
 
     if (err) {
 
