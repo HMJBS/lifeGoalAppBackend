@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const defaultLifeObjects = require(`${__dirname}/json/lifeObjects.json`);
-const lifeObjectsValidator = require(`${__dirname}/models/validators/user.validator.js`);
+const defaultLifeObjects = require(`${__dirname}/../json/lifeObjects.json`);
+const lifeObjectsValidator = require(`${__dirname}/../models/validators/user.validator.js`);
 
 const UserSchema = new Schema({
 
