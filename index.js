@@ -2,6 +2,13 @@ const express = require('express');
 const app = express();
 const process = require('process');
 const mongoose = require('mongoose');
+const cors = require('cors');
+const dotenv = require('dotenv');
+
+// load env file
+if(!dotenv.config()) {
+  throw new Error('dotenv failed.');
+}
 
 //import mongodb's model
 const User = require(`${__dirname}/models/user.js`);
@@ -9,10 +16,11 @@ const User = require(`${__dirname}/models/user.js`);
 init();
 
 const PORT = process.env.PORT || 7005;
-const IP = process.env.HOST ||' localhost';
+const IP = process.env.HOST || 'localhost';
 
 // needed for use req.body of application/json
-app.use(express.json());
+app.use(cors());
+app.use(express.json({}));
 
 // server GET User instance
 app.get('/user/:userName', (req, res) => {
@@ -44,6 +52,7 @@ app.get('/user/:userName', (req, res) => {
 // serve registering of User instance
 app.post('/user', (req, res) => {
 
+  console.log('inside post')
   const newUser = new User( { userName: req.body.userName });
   newUser.save((err) => {
     if (err) {
@@ -52,6 +61,8 @@ app.post('/user', (req, res) => {
       res.status(500).send('Internal Server Error. Can\'t save to DB');
       return;
     }
+    console.log(`[POST /user]Created user ${req.body.userName}`);
+    res.set('Allow', 'GET, POST, HEAD, PUT, OPTIONS');
     res.status(201).send('Created.');
   });
 });
@@ -77,8 +88,6 @@ app.listen(PORT, IP, () => {
 
 function init() {
 
-  // load env file
-  const dotenv = require('dotenv').config();
   mongoose.connect(process.env.MONGOOSE_CONNECTION_STRING, {userNewUrlParser: true});
 
 }
