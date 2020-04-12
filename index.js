@@ -11,7 +11,8 @@ if(!dotenv.config()) {
 }
 
 //import mongodb's model
-const User = require(`${__dirname}/models/user.js`);
+const User = require(`${__dirname}/models/User.js`);
+const SingleObject = require(`${__dirname}/models/SingleObject.js`);
 
 init();
 
@@ -52,9 +53,9 @@ app.get('/user/:userName', (req, res) => {
 // serve registering of User instance
 app.post('/user', (req, res) => {
 
-  console.log('inside post')
   const newUser = new User( { userName: req.body.userName });
   newUser.save((err) => {
+
     if (err) {
       console.error(`[POST /:userName]Can't save new user ${req.params.userName} on DB.`);
       console.error(err);
@@ -62,12 +63,23 @@ app.post('/user', (req, res) => {
       return;
     }
     console.log(`[POST /user]Created user ${req.body.userName}`);
-    res.set('Allow', 'GET, POST, HEAD, PUT, OPTIONS');
-    res.status(201).send('Created.');
+
   });
 });
 
-app.put('/user/:userName', function(req, res) {
+/**
+ * add single oject to non-root oject
+ */
+app.put('/user/:userName/:objectId', async (req, res) => {
+
+  try {
+
+    // find target SingleObject
+    User.findByIdAndUpdate({
+      req.body.
+    })
+
+  }
 
   User.updateOne( { userName: req.body.userName },
                   { lifeObjects: req.body.lifeObjects },
@@ -80,6 +92,41 @@ app.put('/user/:userName', function(req, res) {
                     }
                     res.status(200).send('OK');
                   });
+});
+
+app.put('/user/:userName/', async (req) => {
+
+  // check User existance
+  const parentUser = User.findOne({ userName: req.params.userName });
+  if (!parentUser) {
+    
+    console.error(`PUT /user/${req.params.userName} No such user`);
+    return;
+  }
+
+  const newRootOject = new SingleObject({
+    name: req.body.name,
+    layerDepth: 0,
+    finished: req.body.finished,
+  });
+
+  try {
+
+    // save new single Oject
+    const result = await newRootOject.save();
+    
+    // add _id of this to User object
+    parentUser.lifeObjects.push(result._id);
+
+    await parentUser.save();
+
+    console.log(`PUT /user/${req.body.userName}}`);
+
+  } catch(err) {
+
+    console.err(`failed to PUT /user/${req.body.userName}}`);
+  }
+
 });
 
 app.listen(PORT, IP, () => {
