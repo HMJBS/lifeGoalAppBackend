@@ -23,7 +23,7 @@ const IP = process.env.HOST || 'localhost';
 app.use(cors());
 app.use(express.json({}));
 
-// server GET User instance
+// get list of all life object tree (instance of SingleObject)
 app.get('/user/:userName', (req, res) => {
   User.findOne( { userName: req.params.userName }).
     select('-userName').
@@ -50,7 +50,7 @@ app.get('/user/:userName', (req, res) => {
   });
 });
 
-// serve registering of User instance
+// register new user
 app.post('/user', (req, res) => {
 
   const newUser = new User( { userName: req.body.userName });
@@ -71,98 +71,135 @@ app.post('/user', (req, res) => {
 /**
  * add single oject to non-root oject
  */
-app.put('/user/:userName/:objectId', async (req, res) => {
+app.put('/user/:userName/:objectId', (req, res) => {
 
   // find target SingleObject
-  const targetSingleObject = SingleObject.findById(req.params.objectId); 
+  SingleObject.findById(req.params.objectId, async (err, parentObject) => {
 
-  // reject if singleObject.layerDepth is deeper than 3
-  if (targetSingleObject.layerDepth >= 3) {
+    if (err) {
 
-    res.status(400).send('too deep to put');
-    return;
-  }
+      console.error(`error during find SingleObject ${req.params.objectId}`);
+      res.status(500).send(`error for find SingleObject ${req.params.objectId}`);
+      return;
 
-  // create new single Object
-  const newSingleObject = new SingleObject({
-    name: req.body.name,
-    layerDepth: targetSingleObject.layerDepth + 1,
-    finished: false,
-    children: []
-  });
+    }
 
-  try {
+    if (!parentObject) {
 
-    await newSingleObject.save();
+      console.error(`PUT /user/${req.params.userName}/${req.params.objectId}`);
+      console.error(`no such parent object`);
 
-  } catch (err) {
+      res.status(400).send(`no such parent object ${req.params.objectId}`);
+      return;
 
-    console.error(`failed to save new SingleObject`);
-    console.error(`aborting, PUT /user/${req.params.userName}/${req.params.objectId}`);
-    console.error(err);
+    }
 
-    res.status(500).send('failed to save new single object');
-    return;
+    // reject if singleObject.layerDepth is deeper than 3
+    if (parentObject.layerDepth >= 3) {
 
-  }
+      res.status(400).send('too deep to put');
+      return;
 
-  // update it's child
-  targetSingleObject.children.put(newSingleObject._id);
+    }
 
-  try {
+    // create new single Object
+    const newSingleObject = new SingleObject({
+      name: req.body.name,
+      layerDepth: parentObject.layerDepth + 1,
+      finished: false,
+      children: []
+    });
 
-    await targetSingleObject.save();
+    try {
 
-  } catch (err) {
+      await newSingleObject.save();
 
-    console.error(`failed to save new SingleObject`);
-    console.error(`aborting, PUT /user/${req.params.userName}/${req.params.objectId}`);
-    console.error(err);
+    } catch (err) {
 
-    // remove already saved newSingleObject
-    await SingleObject.findyByIdAndRemove(newSingleObject._id);
-    
-    res.status(400).send('failed to save new singleObject\'s index');
-    return;
-  }
+      console.error(`failed to save new SingleObject`);
+      console.error(`aborting, PUT /user/${req.params.userName}/${req.params.objectId}`);
+      console.error(err);
+
+      res.status(500).send('failed to save new single object');
+      return;
+
+    }
+
+    // update it's child
+    parentObject.children.push(newSingleObject._id);
+
+    try {
+
+      await parentObject.save();
+
+    } catch (err) {
+
+      console.error(`failed to save new SingleObject`);
+      console.error(`aborting, PUT /user/${req.params.userName}/${req.params.objectId}`);
+      console.error(err);
+
+      // remove already saved newSingleObject
+      await SingleObject.findyByIdAndRemove(newSingleObject._id);
+      
+      res.status(400).send('failed to save new singleObject\'s index');
+      return;
+    }
 
   res.status(200).send('OK');
+  });
 });
 
 app.put('/user/:userName/', async (req, res) => {
 
   // check User existance
-  const parentUser = User.findOne({ userName: req.params.userName });
-  if (!parentUser) {
-    
-    console.error(`PUT /user/${req.params.userName} No such user`);
-    res.status(400).send(`No such User ${req.params.userName}`);
-    return;
-  }
+  User.findOne({ userName: req.params.userName }, async (err, parentUser) => {
 
-  const newRootOject = new SingleObject({
-    name: req.body.name,
-    layerDepth: 0,
-    finished: req.body.finished,
+    if (err) {
+      
+      console.error(`Error during find user ${req.params.userName}`);
+      res.status(500).send(`Error during find user ${req.params.userName}`);
+      return;
+
+    }
+
+    if (!parentUser) {
+
+      console.error(`PUT /user/${req.params.userName} No such user`);
+      res.status(400).send(`No such User ${req.params.userName}`);
+      return;
+
+    }
+
+    const newRootOject = new SingleObject({
+      name: req.body.name,
+      layerDepth: 0,
+      finished: req.body.finished,
+    });
+
+    try {
+
+      // save new single Oject
+      const resultDoc = await newRootOject.save();
+
+      console.debug(`newRootObject.id is ${resultDoc._id}`);
+      
+      // add _id of this to User object
+      parentUser.lifeObjects.push(resultDoc._id);
+
+      await parentUser.save();
+
+      console.log(`PUT /user/${req.params.userName}`);
+      res.status(200).send('done');
+
+    } catch (err) {
+
+      console.error(`failed to PUT /user/${req.params.userName}`);
+      console.error(err);
+
+      // rollback new object
+      res.status(500).send(`failed to PUT /user/${req.params.userName}`);
+    }
   });
-
-  try {
-
-    // save new single Oject
-    const result = await newRootOject.save();
-    
-    // add _id of this to User object
-    parentUser.lifeObjects.push(result._id);
-
-    await parentUser.save();
-
-    console.log(`PUT /user/${req.body.userName}}`);
-
-  } catch(err) {
-
-    console.err(`failed to PUT /user/${req.body.userName}}`);
-  }
-
 });
 
 app.listen(PORT, IP, () => {
@@ -171,6 +208,7 @@ app.listen(PORT, IP, () => {
 
 function init() {
 
-  mongoose.connect(process.env.MONGOOSE_CONNECTION_STRING, {userNewUrlParser: true});
+  mongoose.connect(process.env.MONGOOSE_CONNECTION_STRING,
+    {useNewUrlParser: true, useUnifiedTopology: true });
 
 }
