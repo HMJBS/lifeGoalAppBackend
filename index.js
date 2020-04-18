@@ -63,6 +63,7 @@ app.post('/user', (req, res) => {
       return;
     }
     console.log(`[POST /user]Created user ${req.body.userName}`);
+    res.status(201).send('Created');
 
   });
 });
@@ -72,35 +73,70 @@ app.post('/user', (req, res) => {
  */
 app.put('/user/:userName/:objectId', async (req, res) => {
 
+  // find target SingleObject
+  const targetSingleObject = SingleObject.findById(req.params.objectId); 
+
+  // reject if singleObject.layerDepth is deeper than 3
+  if (targetSingleObject.layerDepth >= 3) {
+
+    res.status(400).send('too deep to put');
+    return;
+  }
+
+  // create new single Object
+  const newSingleObject = new SingleObject({
+    name: req.body.name,
+    layerDepth: targetSingleObject.layerDepth + 1,
+    finished: false,
+    children: []
+  });
+
   try {
 
-    // find target SingleObject
-    User.findByIdAndUpdate({
-      req.body.
-    })
+    await newSingleObject.save();
+
+  } catch (err) {
+
+    console.error(`failed to save new SingleObject`);
+    console.error(`aborting, PUT /user/${req.params.userName}/${req.params.objectId}`);
+    console.error(err);
+
+    res.status(500).send('failed to save new single object');
+    return;
 
   }
 
-  User.updateOne( { userName: req.body.userName },
-                  { lifeObjects: req.body.lifeObjects },
-                  (err, updated) => {
-                    if (err) {
-                      console.error(`[POST /user/:userName] failed to update`);
-                      console.error(err);
-                      res.status(500).send('Internal Server Error');
-                      return;
-                    }
-                    res.status(200).send('OK');
-                  });
+  // update it's child
+  targetSingleObject.children.put(newSingleObject._id);
+
+  try {
+
+    await targetSingleObject.save();
+
+  } catch (err) {
+
+    console.error(`failed to save new SingleObject`);
+    console.error(`aborting, PUT /user/${req.params.userName}/${req.params.objectId}`);
+    console.error(err);
+
+    // remove already saved newSingleObject
+    await SingleObject.findyByIdAndRemove(newSingleObject._id);
+    
+    res.status(400).send('failed to save new singleObject\'s index');
+    return;
+  }
+
+  res.status(200).send('OK');
 });
 
-app.put('/user/:userName/', async (req) => {
+app.put('/user/:userName/', async (req, res) => {
 
   // check User existance
   const parentUser = User.findOne({ userName: req.params.userName });
   if (!parentUser) {
     
     console.error(`PUT /user/${req.params.userName} No such user`);
+    res.status(400).send(`No such User ${req.params.userName}`);
     return;
   }
 
