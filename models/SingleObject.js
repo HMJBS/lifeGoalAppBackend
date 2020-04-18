@@ -11,7 +11,10 @@ const SingleObject = new Schema({
     },
     finished: {
         type: Boolean, required: false, default: false
-    }
+    },
+    children: [{
+        type: Schema.Types.ObjectId, 
+    }]
 });
 
 module.exports = mongoose.model('SingleObject', SingleObject);
