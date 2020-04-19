@@ -13,10 +13,10 @@ const SingleObject = new Schema({
         type: Boolean, required: false, default: false
     },
     children: [{
-        type: Schema.Types.ObjectId, ref: 'SingleObject'
+        type: Schema.Types.ObjectId, ref: 'SingleObject', required: false
     }],
-    userName: {
-        type: String
+    owner: {
+        type: Schema.Types.ObjectId, ref: 'User', requred: true
     }
 });
 
