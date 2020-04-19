@@ -74,133 +74,143 @@ app.post('/user', (req, res) => {
  */
 app.put('/user/:userName/:objectId', (req, res) => {
 
-  // find target SingleObject
-  SingleObject.findById(req.params.objectId, async (err, parentObject) => {
+  User.findOne({userName: req.params.userName}, (err1, ownerUser) => {
 
-    if (err) {
+    // find target SingleObject
+    SingleObject.findById(req.params.objectId, async (err, parentObject) => {
 
-      console.error(`error during find SingleObject ${req.params.objectId}`);
-      res.status(500).send(`error for find SingleObject ${req.params.objectId}`);
-      return;
+      if (err) {
 
-    }
+        console.error(`error during find SingleObject ${req.params.objectId}`);
+        res.status(500).send(`error for find SingleObject ${req.params.objectId}`);
+        return;
 
-    if (!parentObject) {
+      }
 
-      console.error(`PUT /user/${req.params.userName}/${req.params.objectId}`);
-      console.error(`no such parent object`);
+      if (!parentObject) {
 
-      res.status(400).send(`no such parent object ${req.params.objectId}`);
-      return;
+        console.error(`PUT /user/${req.params.userName}/${req.params.objectId}`);
+        console.error(`no such parent object`);
 
-    }
+        res.status(400).send(`no such parent object ${req.params.objectId}`);
+        return;
 
-    // reject if singleObject.layerDepth is deeper than 3
-    if (parentObject.layerDepth >= 3) {
+      }
 
-      res.status(400).send('too deep to put');
-      return;
+      // reject if singleObject.layerDepth is deeper than 3
+      if (parentObject.layerDepth >= 3) {
 
-    }
+        res.status(400).send('too deep to put');
+        return;
 
-    // create new single Object
-    const newSingleObject = new SingleObject({
-      name: req.body.name,
-      layerDepth: parentObject.layerDepth + 1,
-      finished: false,
-      children: []
+      }
+
+      // create new single Object
+      const newSingleObject = new SingleObject({
+        name: req.body.name,
+        layerDepth: parentObject.layerDepth + 1,
+        finished: false,
+        owner: 1
+      });
+
+      try {
+
+        await newSingleObject.save();
+
+      } catch (err) {
+
+        console.error(`failed to save new SingleObject`);
+        console.error(`aborting, PUT /user/${req.params.userName}/${req.params.objectId}`);
+        console.error(err);
+
+        res.status(500).send('failed to save new single object');
+        return;
+
+      }
+
+      // update it's child
+      parentObject.children.push(newSingleObject._id);
+
+      try {
+
+        await parentObject.save();
+
+      } catch (err) {
+
+        console.error(`failed to save new SingleObject`);
+        console.error(`aborting, PUT /user/${req.params.userName}/${req.params.objectId}`);
+        console.error(err);
+
+        // remove already saved newSingleObject
+        await SingleObject.findyByIdAndRemove(newSingleObject._id);
+        
+        res.status(400).send('failed to save new singleObject\'s index');
+        return;
+      }
+
+    res.status(200).send('OK');
     });
-
-    try {
-
-      await newSingleObject.save();
-
-    } catch (err) {
-
-      console.error(`failed to save new SingleObject`);
-      console.error(`aborting, PUT /user/${req.params.userName}/${req.params.objectId}`);
-      console.error(err);
-
-      res.status(500).send('failed to save new single object');
-      return;
-
-    }
-
-    // update it's child
-    parentObject.children.push(newSingleObject._id);
-
-    try {
-
-      await parentObject.save();
-
-    } catch (err) {
-
-      console.error(`failed to save new SingleObject`);
-      console.error(`aborting, PUT /user/${req.params.userName}/${req.params.objectId}`);
-      console.error(err);
-
-      // remove already saved newSingleObject
-      await SingleObject.findyByIdAndRemove(newSingleObject._id);
-      
-      res.status(400).send('failed to save new singleObject\'s index');
-      return;
-    }
-
-  res.status(200).send('OK');
   });
 });
 
 app.put('/user/:userName/', async (req, res) => {
 
   // check User existance
-  User.findOne({ userName: req.params.userName }, async (err, parentUser) => {
 
-    if (err) {
-      
-      console.error(`Error during find user ${req.params.userName}`);
-      res.status(500).send(`Error during find user ${req.params.userName}`);
-      return;
+  let parentUser;
+  try {
 
-    }
+    parentUser = await User.findOne({ userName: req.params.userName }).exec();
 
-    if (!parentUser) {
+  } catch (err) {
 
-      console.error(`PUT /user/${req.params.userName} No such user`);
-      res.status(400).send(`No such User ${req.params.userName}`);
-      return;
+    console.error(`Error during find user ${req.params.userName}`);
+    res.status(500).send(`Error during find user ${req.params.userName}`);
+    return;
 
-    }
+  }
 
-    const newRootOject = new SingleObject({
-      name: req.body.name,
-      layerDepth: 0,
-      finished: req.body.finished,
-    });
+  if (!parentUser) {
 
-    try {
+    console.error(`PUT /user/${req.params.userName} No such user`);
+    res.status(400).send(`No such User ${req.params.userName}`);
+    return;
 
-      // save new single Oject
-      const resultDoc = await newRootOject.save();
+  }
 
-      console.debug(`newRootObject.id is ${resultDoc._id}`);
-      
-      // add _id of this to User object
-      parentUser.lifeObjects.push(resultDoc._id);
-
-      await parentUser.save();
-
-      console.log(`PUT /user/${req.params.userName}`);
-      res.status(200).send('done');
-
-    } catch (err) {
-
-      console.error(`failed to PUT /user/${req.params.userName}`);
-      console.error(err);
-
-      // rollback new object
-      res.status(500).send(`failed to PUT /user/${req.params.userName}`);
-    }
+  const newRootSingleOject = new SingleObject({
+    name: req.body.name,
+    layerDepth: 0,
+    finished: req.body.finished,
+    owner: parentUser._id
   });
+
+  try {
+
+    // save new single Oject
+    const resultDoc = await newRootSingleOject.save();
+
+    console.debug(`newRootSingleOject.id is ${resultDoc._id}`);
+    
+    // add _id of this to User object
+    parentUser.lifeObjects.push(resultDoc._id);
+
+    await parentUser.save();
+
+  } catch (err) {
+
+    console.error(`failed to PUT /user/${req.params.userName}`);
+    console.error(err);
+
+    // rollback new object
+    res.status(500).send(`failed to PUT /user/${req.params.userName}`);
+    return
+
+  }
+
+  console.log(`PUT /user/${req.params.userName}`);
+  res.status(200).send('done');
+
 });
 
 app.listen(PORT, IP, () => {
