@@ -13,7 +13,7 @@ const SingleObject = new Schema({
         type: Boolean, required: false, default: false
     },
     children: [{
-        type: Schema.Types.ObjectId, 
+        type: Schema.Types.ObjectId, ref: 'SingleObject'
     }],
     userName: {
         type: String

@@ -27,6 +27,7 @@ app.use(express.json({}));
 app.get('/user/:userName', (req, res) => {
   User.findOne( { userName: req.params.userName }).
     select('-userName').
+    populate('lifeObjects').
     exec( (err, user) => {
 
     if (err) {
