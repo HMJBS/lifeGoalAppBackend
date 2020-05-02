@@ -163,7 +163,28 @@ app.put('/user/:userName/:objectId', async (req, res) => {
     return;
   }
 
-  res.status(200).send('OK');
+  // update owner's children
+  owner.lifeObjects.push(newSingleObject._id);
+
+  try {
+
+    await owner.save();
+
+  } catch (err) {
+
+    console.error(`failed to update owner User doc`);
+    console.error(`aborting, PUT /user/${req.params.userName}/${req.params.objectId}`);
+    console.error(err);
+
+    // remove already saved newSingleObject
+    await SingleObject.findyByIdAndRemove(newSingleObject._id);
+    
+    res.status(400).send('failed to save new singleObject\'s index');
+    return;
+  }
+
+  res.status(200).send(newSingleObject);
+  console.log(`PUT /user/${req.params.userName}/${req.params.objectId}`)
 
 });
 
