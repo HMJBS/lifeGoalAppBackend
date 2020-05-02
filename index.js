@@ -112,7 +112,7 @@ app.put('/user/:userName/:objectId', async (req, res) => {
   }
 
   // reject if singleObject.layerDepth is deeper than 3
-  if (parentObject.layerDepth >= 3) {
+  if (parentObject.layerDepth > 3) {
 
     res.status(400).send('too deep to put');
     return;
