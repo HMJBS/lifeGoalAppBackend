@@ -82,8 +82,8 @@ app.put('/user/:userName/:objectId', async (req, res) => {
   
   } catch (err) {
 
-    console.error(`Can\'t find user ${req.params.userName}`);
-    res.status(400).send(`Can\'t find user ${req.params.userName}`);
+    console.error(`Can't find user ${req.params.userName}`);
+    res.status(400).send(`Can't find user ${req.params.userName}`);
   
   }
 
