@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+const SingleObject = require(`${__dirname}/SingleObject.js`);
+
 const UserSchema = new Schema({
 
   // user name
