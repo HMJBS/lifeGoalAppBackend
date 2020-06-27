@@ -10,6 +10,7 @@ const getObjectTree = require('./lib/getObjectTree.js').getObjectTree;
 const postNewUser = require('./lib/postNewUser.js').postNewUser;
 const addNewNonRootObject = require('./lib/addNewNonRootObject.js').addNewNonRootObject;
 const addNewRootObject = require('./lib/addNewRootObject.js').addNewRootObject;
+const removeObject = require('./lib/removeObject.js').removeObject;
 
 // load env file
 if(!dotenv.config()) {
@@ -36,6 +37,9 @@ app.put('/user/:userName/:objectId', addNewNonRootObject);
 
 // add single object to root object
 app.put('/user/:userName/', addNewRootObject);
+
+// remove object
+app.delete('/user/:userName/:objectId', removeObject);
 
 app.listen(PORT, IP, () => {
   console.log(`[core]start listerning at ${PORT}`);
