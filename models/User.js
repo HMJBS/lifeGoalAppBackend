@@ -28,9 +28,10 @@ UserSchema.methods.validPassword = function (rawPassword) {
     .then((result) => { return result })
     .catch((err) => {
       console.error(`error while hash comparing\n${err}`)
-      throw new Error(`error while hash comparing\n${err}`)
+      throw err
     })
 }
+
 // apply unique validator
 UserSchema.plugin(uniqueValidator)
 // export model
