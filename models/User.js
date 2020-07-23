@@ -1,11 +1,12 @@
 const mongoose = require('mongoose')
+const uniqueValidator = require('mongoose-unique-validator')
 const Schema = mongoose.Schema
 const bcrypt = require('bcrypt')
 
 const UserSchema = new Schema({
 
   // user name
-  userName: { type: String, required: true, max: 20 },
+  userName: { type: String, unique: true, required: true, max: 20 },
 
   // Id list of all lifeObject which belong to this user
   lifeObjects: [{ type: Schema.Types.ObjectId, ref: 'SingleObject' }],
@@ -30,6 +31,7 @@ UserSchema.methods.validPassword = function (rawPassword) {
       throw new Error(`error while hash comparing\n${err}`)
     })
 }
-
+// apply unique validator
+UserSchema.plugin(uniqueValidator)
 // export model
 module.exports = mongoose.model('User', UserSchema)
