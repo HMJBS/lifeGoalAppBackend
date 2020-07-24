@@ -40,34 +40,44 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 // get list of all life object tree (instance of SingleObject)
-app.get('/user/:userName', getObjectTree)
+app.get('/user/:userName', isAuthorized, getObjectTree)
 
 // register new user
 app.post('/user', postNewUser)
 
 // login
 app.post('/login', passport.authenticate('local'), (req, res) => {
+  console.log(`login: ${req.user}`)
   res.status(200).send('OK')
 })
 
 // logout
 app.get('/logout', (req, res) => {
   req.logout()
+  console.log(`logout: ${req.user}`)
   res.sendStatus(200)
 })
 
 // add single oject to non-root oject
-app.put('/user/:userName/:objectId', addNewNonRootObject)
+app.put('/user/:userName/:objectId', isAuthorized, addNewNonRootObject)
 
 // add single object to root object
-app.put('/user/:userName/', addNewRootObject)
+app.put('/user/:userName/', isAuthorized, addNewRootObject)
 
 // remove object
-app.delete('/user/:userName/:objectId', removeObject)
+app.delete('/user/:userName/:objectId', isAuthorized, removeObject)
 
 app.listen(PORT, IP, () => {
   console.log(`[core]start listerning at ${PORT}`)
 })
+
+function isAuthorized(req, res, next) {
+  if (req.user.userName === req.params.userName) {
+    next()
+  } else {
+    res.sendStatus(403)
+  }
+}
 
 function init () {
   const User = require('./models/User')
