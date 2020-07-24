@@ -5,7 +5,7 @@ const mongoose = require('mongoose')
 const cors = require('cors')
 const dotenv = require('dotenv')
 const passport = require('passport')
-const flush = require('connect-flash')
+const session = require('express-session')
 
 // http method handlers
 const getObjectTree = require('./lib/getObjectTree.js').getObjectTree
@@ -28,8 +28,14 @@ const PORT = process.env.PORT || 7005
 const IP = process.env.HOST || 'localhost'
 
 // needed for use req.body of application/json
-app.use(cors())
+app.use(cors({
+  credentials: true,
+  origin: true
+}))
 app.use(express.json({}))
+app.use(session({
+  secret: 'whatMakesMeAGoodDemoman'
+}))
 app.use(passport.initialize())
 app.use(passport.session())
 
