@@ -5,6 +5,7 @@ const mongoose = require('mongoose')
 const cors = require('cors')
 const dotenv = require('dotenv')
 const passport = require('passport')
+const flush = require('connect-flash')
 
 // http method handlers
 const getObjectTree = require('./lib/getObjectTree.js').getObjectTree
@@ -29,6 +30,8 @@ const IP = process.env.HOST || 'localhost'
 // needed for use req.body of application/json
 app.use(cors())
 app.use(express.json({}))
+app.use(passport.initialize())
+app.use(passport.session())
 
 // get list of all life object tree (instance of SingleObject)
 app.get('/user/:userName', getObjectTree)
@@ -37,7 +40,9 @@ app.get('/user/:userName', getObjectTree)
 app.post('/user', postNewUser)
 
 // login
-app.post('/login', passport.authenticate('local'))
+app.post('/login', passport.authenticate('local'), (req, res) => {
+  res.status(200).send('OK')
+})
 
 // add single oject to non-root oject
 app.put('/user/:userName/:objectId', addNewNonRootObject)
@@ -53,8 +58,19 @@ app.listen(PORT, IP, () => {
 })
 
 function init () {
+  const User = require('./models/User')
   mongoose.connect(process.env.MONGOOSE_CONNECTION_STRING,
     { useNewUrlParser: true, useUnifiedTopology: true })
 
   passport.use(localStorategy)
+
+  passport.serializeUser(function (user, done) {
+    done(null, user._id)
+  })
+
+  passport.deserializeUser(function (id, done) {
+    User.findById(id, function (err, user) {
+      done(err, user)
+    })
+  })
 }
