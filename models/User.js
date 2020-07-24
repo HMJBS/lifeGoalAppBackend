@@ -23,13 +23,15 @@ const UserSchema = new Schema({
  * @param {String} rawPassword password to check hash
  * @returns {Boolean}
  */
-UserSchema.methods.validPassword = function (rawPassword) {
-  bcrypt.compare(rawPassword, this.hash)
-    .then((result) => { return result })
-    .catch((err) => {
-      console.error(`error while hash comparing\n${err}`)
-      throw err
-    })
+UserSchema.methods.validPassword = async function (rawPassword) {
+  console.debug(`comparing pass ${rawPassword} to hash ${this.hash}`)
+  try {
+    const result = await bcrypt.compare(rawPassword, this.hash)
+    return result
+  } catch (err) {
+    console.error(`error while hash comparing\n${err}`)
+    throw err
+  }
 }
 
 // apply unique validator
