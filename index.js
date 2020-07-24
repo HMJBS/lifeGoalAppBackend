@@ -44,6 +44,12 @@ app.post('/login', passport.authenticate('local'), (req, res) => {
   res.status(200).send('OK')
 })
 
+// logout
+app.get('/logout', (req, res) => {
+  req.logout()
+  res.sendStatus(200)
+})
+
 // add single oject to non-root oject
 app.put('/user/:userName/:objectId', addNewNonRootObject)
 
