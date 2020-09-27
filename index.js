@@ -3,7 +3,6 @@ const app = express()
 const process = require('process')
 const mongoose = require('mongoose')
 const cors = require('cors')
-const dotenv = require('dotenv')
 const passport = require('passport')
 const session = require('express-session')
 
@@ -17,15 +16,19 @@ const removeObject = require('./lib/removeObject.js').removeObject
 // passportjs storategy configurator
 const localStorategy = require('./lib/authLogin.js').localStorategy
 
-// load env file
-if (!dotenv.config()) {
-  throw new Error('dotenv failed.')
+// only development
+if (process.env.NODE_ENV === 'development') {
+  console.log('use development env')
+  const dotenv = require('dotenv')
+  if (!dotenv.config()) {
+    throw new Error('dotenv failed.')
+  }
 }
 
 init()
 
-const PORT = process.env.PORT || 7005
-const IP = process.env.HOST || 'localhost'
+const PORT = 7005
+const IP = '0.0.0.0'
 
 // needed for use req.body of application/json
 app.use(cors({
